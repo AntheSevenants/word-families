@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nearest Neighbors Finder</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+    }
+    .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    textarea {
+        width: 100%;
+        height: 200px;
+        margin-bottom: 20px;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        resize: none;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    .neighbor-list {
+        margin-top: 10px;
+        margin-bottom: 20px;
+        padding-left: 20px;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Nearest Neighbors Finder</h2>
+    <textarea id="wordList" placeholder="Enter a list of words, one per line"></textarea>
+    <button onclick="findNeighbors()">Find Neighbors</button>
+    <div id="neighborResults"></div>
+</div>
+
+<script>
+function findNeighbors() {
+    const wordList = document.getElementById('wordList').value.split('\n').filter(word => word.trim() !== '');
+
+    if (wordList.length === 0) {
+        alert('Please enter some words.');
+        return;
+    }
+
+    const neighborResults = document.getElementById('neighborResults');
+    neighborResults.innerHTML = '';
+
+    for (let word of wordList) {
+        const neighbors = findNearestNeighbors(word, wordList);
+        const heading = document.createElement('h3');
+        heading.textContent = word;
+        neighborResults.appendChild(heading);
+        const neighborList = document.createElement('ol');
+        neighborList.className = 'neighbor-list';
+        neighbors.forEach(neighbor => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${neighbor.word} (${neighbor.distance})`;
+            neighborList.appendChild(listItem);
+        });
+        neighborResults.appendChild(neighborList);
+    }
+}
+
+function findNearestNeighbors(word, wordList) {
+    // Calculate Levenshtein distance between the word and all other words
+    const distances = wordList.map(w => {
+        return { word: w, distance: levenshteinDistance(word, w) };
+    });
+
+    // Sort by distance
+    distances.sort((a, b) => a.distance - b.distance);
+
+    // Select the five nearest neighbors
+    const neighbors = distances.slice(1, 6);
+    return neighbors;
+}
+
+function levenshteinDistance(s1, s2) {
+    const len1 = s1.length;
+    const len2 = s2.length;
+  
+    const matrix = [];
+  
+    for (let i = 0; i <= len1; i++) {
+        matrix[i] = [i];
+    }
+  
+    for (let j = 0; j <= len2; j++) {
+        matrix[0][j] = j;
+    }
+  
+    for (let i = 1; i <= len1; i++) {
+        for (let j = 1; j <= len2; j++) {
+            const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1, // deletion
+                matrix[i][j - 1] + 1, // insertion
+                matrix[i - 1][j - 1] + cost // substitution
+            );
+        }
+    }
+  
+    return matrix[len1][len2];
+}
+</script>
+</body>
+</html>
